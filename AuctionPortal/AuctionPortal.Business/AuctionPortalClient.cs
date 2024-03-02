@@ -11,32 +11,43 @@
 			cancellationTokenSource = new CancellationTokenSource();
 		}
 
-		public async Task InitiateAuctionAsync(InitiateAuctionRequest initiateAuctionRequest)
+		public async Task<InitiateAuctionResponse> InitiateAuctionAsync(InitiateAuctionRequest initiateAuctionRequest)
 		{
-			await client.InitiateAuctionAsync(initiateAuctionRequest);
+			var auctionResponse = await client.InitiateAuctionAsync(initiateAuctionRequest);
 			client.PublishInitiatedAuction(new AuctionEvent
 			{
-				AuctionId = Guid.NewGuid().ToString()
+				AuctionId = auctionResponse.AuctionId,
+				ItemName = auctionResponse.ItemName
 			});
+			return auctionResponse;
 		}
 
-		public async Task BidAuctionAsync(BidRequest initiateBidRequest)
+		public async Task<BidResponse> BidAuctionAsync(BidRequest initiateBidRequest)
 		{
-			await client.BidAuctionAsync(initiateBidRequest);
-			client.PublishBid(new BidEvent
-			{
-				AuctionId = initiateBidRequest.AuctionId,
-				Price = initiateBidRequest.Amount
-			});
+			var bidResponse = await client.BidAuctionAsync(initiateBidRequest);
+
+			if (bidResponse.IsSuccess) 
+				client.PublishBid(new BidEvent
+				{
+					AuctionId = initiateBidRequest.AuctionId,
+					Amount = initiateBidRequest.Amount
+				});
+
+			return bidResponse;
 		}
 
-		public async Task CloseAuctionAsync(CloseAuctionRequest closeAuctionRequest)
+		public async Task<CloseAuctionResponse> CloseAuctionAsync(CloseAuctionRequest closeAuctionRequest)
 		{
-			await client.CloseAuctionAsync(closeAuctionRequest);
-			client.PublishClosedAuction(new AuctionEvent
-			{
-				AuctionId = closeAuctionRequest.AuctionId
-			});
+			var auctionResponse = await client.CloseAuctionAsync(closeAuctionRequest);
+
+			if (auctionResponse.IsSuccess)
+				client.PublishClosedAuction(new AuctionEvent
+				{
+					AuctionId = auctionResponse.AuctionId,
+					ItemName = auctionResponse.ItemName,
+				});
+
+			return auctionResponse;
 		}
 
 		public async Task SubscribeToInitiatedAuctions(Action<AuctionEvent> onEventReceived)
@@ -76,16 +87,6 @@
 					onEventReceived(@event);
 				}
 			}
-		}
-
-		//public async Task PublishEvent(Event @event)
-		//{
-		//	client.Publish(@event);
-		//}
-
-		public void Stop()
-		{
-			cancellationTokenSource.Cancel();
 		}
 	}
 }

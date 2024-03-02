@@ -1,47 +1,159 @@
 ﻿using AuctionPortal.Business;
 using Grpc.Core;
+using System.ComponentModel.DataAnnotations;
 
 namespace AuctionPortal.Client
 {
 	class Program
 	{
-		const int Port = 50051;
-
+		private readonly static string ClientId = Guid.NewGuid().ToString();
 		static async Task Main(string[] args)
 		{
-			//Channel channel = new Channel("127.0.0.1:" + Port, ChannelCredentials.Insecure);
-			//var client = new Auctions.AuctionsClient(channel);
+			var channel = new Channel("localhost:50051", ChannelCredentials.Insecure);
+			var client = new AuctionPortalClient(new AuctionPortalService.AuctionPortalServiceClient(channel));
 
-			//// Example usage
-			//var initiateResponse = client.InitiateAuction(new InitiateAuctionRequest { ItemName = "Item 1", StartingPrice = 100 });
-			//Console.WriteLine("Auction ID: " + initiateResponse.AuctionId);
+			client.SubscribeToInitiatedAuctions(HandleInitiatedAuctionEvent);
+			client.SubscribeToBids(HandleBidEvent);
+			client.SubscribeToClosedAuctions(HandleClosedAuctionEvent);
 
-			//var bidResponse = client.BidOnAuction(new InitiateBidRequest { AuctionId = initiateResponse.AuctionId, Amount = 150 });
-			//Console.WriteLine("Bid response: " + bidResponse.Message);
-
-			//var closeResponse = client.CloseAuction(new CloseAuctionRequest { AuctionId = initiateResponse.AuctionId });
-			//Console.WriteLine("Close response: " + closeResponse.Message);
-
-			//channel.ShutdownAsync().Wait();
-			//Console.WriteLine("Press any key to exit...");
-			//Console.ReadKey();
-
-			using (var client = new AuctionClient("localhost", 50051))
+			while (true)
 			{
-				await client.InitiateAuction("Item1", 100);
-				await client.BidOnAuction("Item1", 120);
-				await client.CloseAuction("Item1");
+				Console.WriteLine(@"
+Please type the option that you want to do:
+1) Initiate auction
+2) Bid auction
+3) Close auction
+4) Exit");
+
+				var optionSelected = Console.ReadLine();
+
+				switch (optionSelected)
+				{
+					case "1":
+						await InitiateAuction(client);
+						break;
+					case "2":
+						await BidAuction(client);
+						break;
+					case "3":
+						await CloseAuction(client);
+						break;
+					case "4":
+						return;
+					default:
+						Console.Clear();
+						break;
+				}
 			}
-
-			using (var client = new AuctionClient("localhost", 50052))
-			{
-				await client.InitiateAuction("Item1", 100);
-				await client.BidOnAuction("Item1", 120);
-				await client.CloseAuction("Item1");
-			}
-
-
-			Console.ReadLine();
 		}
+
+		private static async Task InitiateAuction(AuctionPortalClient client)
+		{
+			var isValid = false;
+
+			string itemName = null;
+			double itemAmount = 0;
+
+			while (!isValid)
+			{
+				Console.WriteLine("Type name of the item to sell:");
+				itemName = Console.ReadLine();
+
+				if (string.IsNullOrWhiteSpace(itemName))
+				{
+					Console.WriteLine("Invalid item name provided");
+					continue;
+				}
+
+				Console.WriteLine("Type starting amount to sell the item:");
+				var itemAmountStr = Console.ReadLine();
+
+				if (!double.TryParse(itemAmountStr, out itemAmount))
+				{
+					Console.WriteLine("Invalid starting amount provided");
+					continue;
+				}
+
+				isValid = true;
+			}
+
+			var newAuction = await client.InitiateAuctionAsync(new InitiateAuctionRequest { ItemName = itemName, StartingAmount = itemAmount });
+			Console.WriteLine($"Auction {newAuction.AuctionId} created!");
+		}
+
+		private static async Task BidAuction(AuctionPortalClient client)
+		{
+			var isValid = false;
+
+			string auctionIdToBid = null;
+			double bidAmount = 0;
+
+			while (!isValid)
+			{
+				Console.WriteLine("Type the id of the auction:");
+				auctionIdToBid = Console.ReadLine();
+
+				if (string.IsNullOrWhiteSpace(auctionIdToBid))
+				{
+					Console.WriteLine("Invalid auction id provided");
+					continue;
+				}
+
+				Console.WriteLine("Type amount to bid:");
+				var bidAmountStr = Console.ReadLine();
+
+				if (!double.TryParse(bidAmountStr, out bidAmount))
+				{
+					Console.WriteLine("Invalid bid amount provided");
+					continue;
+				}
+
+				isValid = true;
+			}			
+
+			var bidResponse = await client.BidAuctionAsync(new BidRequest { AuctionId = auctionIdToBid, Amount = bidAmount, ClientId = ClientId });
+			Console.WriteLine(bidResponse.Message);
+		}
+
+		private static async Task CloseAuction(AuctionPortalClient client)
+		{
+			var isValid = false;
+
+			string auctionIdToClose = null;
+
+			while (!isValid)
+			{
+				Console.WriteLine("Type the id of the auction:");
+				auctionIdToClose = Console.ReadLine();
+
+				if (string.IsNullOrWhiteSpace(auctionIdToClose))
+				{
+					Console.WriteLine("Invalid auction id provided");
+					continue;
+				}
+
+				isValid = true;
+			}
+
+			var auctionResponse = await client.CloseAuctionAsync(new CloseAuctionRequest { AuctionId = auctionIdToClose });
+			Console.WriteLine(auctionResponse.Message);
+		}
+
+		#region Event Handlers
+		public static async void HandleInitiatedAuctionEvent(AuctionEvent @event)
+		{
+			Console.WriteLine($"Client {ClientId} received new auction: {@event.AuctionId} - {@event.ItemName}");
+		}
+
+		public static async void HandleBidEvent(BidEvent @event)
+		{
+			Console.WriteLine($"Client {ClientId} received new bid for auction: {@event.AuctionId} - {@event.Amount}");
+		}
+
+		public static async void HandleClosedAuctionEvent(AuctionEvent @event)
+		{
+			Console.WriteLine($"Client {ClientId} received closed auction: {@event.AuctionId} - {@event.ItemName}");
+		}
+		#endregion
 	}
 }

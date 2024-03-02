@@ -1,15 +1,11 @@
-﻿using Grpc.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AuctionPortal.Business.Models;
+using Grpc.Core;
 
 namespace AuctionPortal.Business.Services
 {
 	public class AuctionPortalService : global::AuctionPortalService.AuctionPortalServiceBase
 	{
-		private Dictionary<string, AuctionInfo> _auctions = new Dictionary<string, AuctionInfo>();
+		private readonly Dictionary<string, AuctionModel> auctions = new();
 		private readonly List<IServerStreamWriter<AuctionEvent>> initiatedAuctionSubscribers = new List<IServerStreamWriter<AuctionEvent>>();
 		private readonly List<IServerStreamWriter<BidEvent>> bidSubscribers = new List<IServerStreamWriter<BidEvent>>();
 		private readonly List<IServerStreamWriter<AuctionEvent>> closedAuctionSubscribers = new List<IServerStreamWriter<AuctionEvent>>();
@@ -17,34 +13,55 @@ namespace AuctionPortal.Business.Services
 		public override Task<InitiateAuctionResponse> InitiateAuction(InitiateAuctionRequest request, ServerCallContext context)
 		{
 			string auctionId = Guid.NewGuid().ToString();
-			_auctions.Add(auctionId, new AuctionInfo { ItemName = request.ItemName, StartingPrice = request.StartingPrice });
+			auctions.Add(auctionId, new AuctionModel { Id = auctionId, ItemName = request.ItemName, StartingAmount = request.StartingAmount });
 			return Task.FromResult(new InitiateAuctionResponse { AuctionId = auctionId });
 		}
 
 		public override Task<BidResponse> BidAuction(BidRequest request, ServerCallContext context)
 		{
-			if (_auctions.TryGetValue(request.AuctionId, out AuctionInfo auction))
+			if (auctions.TryGetValue(request.AuctionId, out AuctionModel auction))
 			{
-				// Implement bidding logic
-				//NotifyBidders(request.AuctionId, request.Amount, "New bid submitted");
-				return Task.FromResult(new BidResponse { Success = true, Message = "Bid successful" });
+				if (auction.StartingAmount > request.Amount || (auction.HighestBid is not null && auction.HighestBid.Amount > request.Amount))
+				{
+					return Task.FromResult(new BidResponse
+					{
+						IsSuccess = false,
+						Message = $"Higher amount must be sent for auction {auction.Id}: {auction.ItemName}"
+					});
+				}
+
+				auction.HighestBid = new BidModel
+				{
+					Amount = request.Amount,
+					ClientId = request.ClientId
+				};
+
+				return Task.FromResult(new BidResponse { IsSuccess = true, Message = $"Bid successfully sent for auction {auction.Id}: {auction.ItemName}" });
 			}
 			else
 			{
-				return Task.FromResult(new BidResponse { Success = false, Message = "Auction not found" });
+				return Task.FromResult(new BidResponse { IsSuccess = false, Message = "Auction not found" });
 			}
 		}
 
 		public override Task<CloseAuctionResponse> CloseAuction(CloseAuctionRequest request, ServerCallContext context)
 		{
-			if (_auctions.TryGetValue(request.AuctionId, out AuctionInfo auction))
+			if (auctions.TryGetValue(request.AuctionId, out AuctionModel auction))
 			{
-				_auctions.Remove(request.AuctionId);
-				return Task.FromResult(new CloseAuctionResponse { Success = true, Message = "Auction closed" });
+				var winnerText = auction.HighestBid is null ? "N/A" : $"Highest bid: {auction.HighestBid.Amount} - {auction.HighestBid.ClientId}";
+
+				auctions.Remove(request.AuctionId);
+				return Task.FromResult(new CloseAuctionResponse
+				{
+					AuctionId = auction.Id,
+					ItemName = auction.ItemName,
+					IsSuccess = true,
+					Message = $"Auction {auction.Id} closed: {auction.ItemName}. Winner: {winnerText}"
+				});
 			}
 			else
 			{
-				return Task.FromResult(new CloseAuctionResponse { Success = false, Message = "Auction not found" });
+				return Task.FromResult(new CloseAuctionResponse { IsSuccess = false, Message = "Auction not found" });
 			}
 		}
 
@@ -54,7 +71,6 @@ namespace AuctionPortal.Business.Services
 
 			while (!context.CancellationToken.IsCancellationRequested)
 			{
-				// Avoid pegging CPU
 				await Task.Delay(100);
 			}
 
@@ -67,7 +83,6 @@ namespace AuctionPortal.Business.Services
 
 			while (!context.CancellationToken.IsCancellationRequested)
 			{
-				// Avoid pegging CPU
 				await Task.Delay(100);
 			}
 
@@ -80,7 +95,6 @@ namespace AuctionPortal.Business.Services
 
 			while (!context.CancellationToken.IsCancellationRequested)
 			{
-				// Avoid pegging CPU
 				await Task.Delay(100);
 			}
 
@@ -113,11 +127,5 @@ namespace AuctionPortal.Business.Services
 			}
 			await Task.CompletedTask;
 		}
-	}
-
-	public class AuctionInfo
-	{
-		public string ItemName { get; set; }
-		public double StartingPrice { get; set; }
 	}
 }
