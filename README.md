@@ -31,7 +31,11 @@ Main steps:
 1. Make sure you set up both AuctionPortal and AuctionPortal.Client as start up projects.
 2. Run more instances of AuctionPortal.Client if you want to see multiple nodes interacting in the network.
 
-For reference: AuctionPortal sets up the server, and the AuctionPortal.Client creates a client. That said, there should be a single instance of AuctionPortal but there can be 1 or more instances of AuctionPortal.Client.
+Quick tips
+
+1. AuctionPortal sets up the server, and the AuctionPortal.Client creates a client. That said, there should be a single instance of AuctionPortal but there can be 1 or more instances of AuctionPortal.Client.
+2. Auction ids are GUIDs. It is recommended to copy the value from the Console and paste it into other Consoles if needed so you do not have to type the value manually.
+3. Each Console will display the id of the Client. That way, it is easy to know which events are received in which Client based on actions done by other clients.
 
 ## Work pending & future improvements
 
