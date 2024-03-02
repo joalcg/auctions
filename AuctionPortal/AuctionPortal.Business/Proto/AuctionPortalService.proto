@@ -1,0 +1,54 @@
+﻿syntax = "proto3";
+
+service AuctionPortalService {
+    rpc InitiateAuction(InitiateAuctionRequest) returns (InitiateAuctionResponse);
+    rpc BidAuction(BidRequest) returns (BidResponse);
+    rpc CloseAuction(CloseAuctionRequest) returns (CloseAuctionResponse);
+
+    rpc SubscribeToInitiatedAuctions(EmptyRequest) returns (stream AuctionEvent);
+    rpc SubscribeToBids(EmptyRequest) returns (stream BidEvent);
+    rpc SubscribeToClosedAuctions(EmptyRequest) returns (stream AuctionEvent);
+
+    rpc PublishInitiatedAuction(AuctionEvent) returns (stream EmptyRequest);
+    rpc PublishBid(BidEvent) returns (stream EmptyRequest);
+    rpc PublishClosedAuction(AuctionEvent) returns (stream EmptyRequest);
+}
+
+message InitiateAuctionRequest {
+    string ItemName = 1;
+    double StartingPrice = 2;
+}
+
+message InitiateAuctionResponse {
+    string AuctionId = 1;
+}
+
+message BidRequest {
+    string AuctionId = 1;
+    double Amount = 2;
+}
+
+message BidResponse {
+    bool Success = 1;
+    string Message = 2;
+}
+
+message CloseAuctionRequest {
+    string AuctionId = 1;
+}
+
+message CloseAuctionResponse {
+    bool Success = 1;
+    string Message = 2;
+}
+
+message BidEvent {
+    string AuctionId = 1;
+    double Price = 2;
+}
+
+message AuctionEvent {
+    string AuctionId = 1;
+}
+
+message EmptyRequest {}
