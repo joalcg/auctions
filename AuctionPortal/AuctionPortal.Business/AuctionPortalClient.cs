@@ -45,6 +45,7 @@
                 {
                     AuctionId = auctionResponse.AuctionId,
                     ItemName = auctionResponse.ItemName,
+                    WonByClientId = auctionResponse.WonByClientId
                 });
 
             return auctionResponse;

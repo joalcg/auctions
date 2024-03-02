@@ -46,6 +46,7 @@ message CloseAuctionResponse {
     string ItemName = 2;
     bool IsSuccess = 3;
     string Message = 4;
+    optional string WonByClientId = 5;
 }
 
 message BidEvent {
@@ -56,6 +57,7 @@ message BidEvent {
 message AuctionEvent {
     string AuctionId = 1;
     string ItemName = 2;
+    optional string WonByClientId = 3;
 }
 
 message EmptyRequest {}

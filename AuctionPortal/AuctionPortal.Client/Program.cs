@@ -161,6 +161,9 @@ Please type the option that you want to do:
         public static async void HandleClosedAuctionEvent(AuctionEvent @event)
         {
             Console.WriteLine($"Client {ClientId} received closed auction: {@event.AuctionId} - {@event.ItemName}");
+
+            if (@event.WonByClientId == ClientId)
+                Console.WriteLine($"Congratulations! You WON the bid for auction: {@event.AuctionId} - {@event.ItemName}");
         }
         #endregion
     }

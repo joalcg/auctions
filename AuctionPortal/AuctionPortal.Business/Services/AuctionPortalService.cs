@@ -5,6 +5,7 @@ namespace AuctionPortal.Business.Services
 {
     public class AuctionPortalService : global::AuctionPortalService.AuctionPortalServiceBase
     {
+        //TODO: move auctions from a variable in memory to a database
         private readonly Dictionary<string, AuctionModel> auctions = new();
         private readonly List<IServerStreamWriter<AuctionEvent>> initiatedAuctionSubscribers = new List<IServerStreamWriter<AuctionEvent>>();
         private readonly List<IServerStreamWriter<BidEvent>> bidSubscribers = new List<IServerStreamWriter<BidEvent>>();
@@ -65,7 +66,8 @@ namespace AuctionPortal.Business.Services
                     AuctionId = auction.Id,
                     ItemName = auction.ItemName,
                     IsSuccess = true,
-                    Message = $"Auction {auction.Id} closed: {auction.ItemName}. Winner: {winnerText}"
+                    Message = $"Auction {auction.Id} closed: {auction.ItemName}. Winner: {winnerText}",
+                    WonByClientId = auction.HighestBid?.ClientId ?? string.Empty // TODO: handle null values in a better way
                 });
             }
             else
