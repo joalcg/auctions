@@ -29,16 +29,61 @@ Please type the option that you want to do:
 				switch (optionSelected)
 				{
 					case "1":
-						await client.InitiateAuctionAsync(new InitiateAuctionRequest { ItemName = "test1", StartingPrice = 111 });
-						Console.WriteLine("Auction created!");
+						Console.WriteLine("Type name of the item to sell:");
+						var itemName = Console.ReadLine();
+
+						if (string.IsNullOrWhiteSpace(itemName))
+						{
+							Console.WriteLine("Invalid item name provided");
+							continue;
+						}
+
+						Console.WriteLine("Type starting amount to sell the item:");
+						var itemAmountStr = Console.ReadLine();
+
+						if (!double.TryParse(itemAmountStr, out double itemAmount))
+						{
+							Console.WriteLine("Invalid starting amount provided");
+							continue;
+						}
+
+						var newAuction = await client.InitiateAuctionAsync(new InitiateAuctionRequest { ItemName = itemName, StartingAmount = itemAmount });
+						Console.WriteLine($"Auction {newAuction.AuctionId} created!");
 						break;
 					case "2":
-						await client.BidAuctionAsync(new BidRequest { AuctionId = "adasd" });
-						Console.WriteLine("Bid sent!");
+						Console.WriteLine("Type the id of the auction:");
+						var auctionIdToBid = Console.ReadLine();
+
+						if (string.IsNullOrWhiteSpace(auctionIdToBid))
+						{
+							Console.WriteLine("Invalid auction id provided");
+							continue;
+						}
+
+						Console.WriteLine("Type amount to bid:");
+						var bidAmountStr = Console.ReadLine();
+
+						if (!double.TryParse(bidAmountStr, out double bidAmount))
+						{
+							Console.WriteLine("Invalid bid amount provided");
+							continue;
+						}
+
+						var bidResponse = await client.BidAuctionAsync(new BidRequest { AuctionId = auctionIdToBid, Amount = bidAmount });
+						Console.WriteLine(bidResponse.Message);
 						break;
 					case "3":
-						await client.CloseAuctionAsync(new CloseAuctionRequest { AuctionId = "asddsaasdda" });
-						Console.WriteLine("Auction closed!");
+						Console.WriteLine("Type the id of the auction:");
+						var auctionIdToClose = Console.ReadLine();
+
+						if (string.IsNullOrWhiteSpace(auctionIdToClose))
+						{
+							Console.WriteLine("Invalid auction id provided");
+							continue;
+						}
+
+						var auctionResponse = await client.CloseAuctionAsync(new CloseAuctionRequest { AuctionId = auctionIdToClose });
+						Console.WriteLine(auctionResponse.Message);
 						break;
 					case "4":
 						return;
@@ -49,6 +94,7 @@ Please type the option that you want to do:
 			}
 		}
 
+		#region Event Handlers
 		public static async void HandleInitiatedAuctionEvent(AuctionEvent @event)
 		{
 			Console.WriteLine($"Client {ClientId} received new auction: " + @event.AuctionId);
@@ -63,5 +109,6 @@ Please type the option that you want to do:
 		{
 			Console.WriteLine($"Client {ClientId} received closed auction: " + @event.AuctionId);
 		}
+		#endregion
 	}
 }

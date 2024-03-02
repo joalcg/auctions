@@ -16,11 +16,12 @@ service AuctionPortalService {
 
 message InitiateAuctionRequest {
     string ItemName = 1;
-    double StartingPrice = 2;
+    double StartingAmount = 2;
 }
 
 message InitiateAuctionResponse {
     string AuctionId = 1;
+    string ItemName = 2;
 }
 
 message BidRequest {
@@ -29,7 +30,7 @@ message BidRequest {
 }
 
 message BidResponse {
-    bool Success = 1;
+    bool IsSuccess = 1;
     string Message = 2;
 }
 
@@ -38,17 +39,20 @@ message CloseAuctionRequest {
 }
 
 message CloseAuctionResponse {
-    bool Success = 1;
-    string Message = 2;
+    string AuctionId = 1;
+    string ItemName = 2;
+    bool IsSuccess = 3;
+    string Message = 4;
 }
 
 message BidEvent {
     string AuctionId = 1;
-    double Price = 2;
+    double Amount = 2;
 }
 
 message AuctionEvent {
     string AuctionId = 1;
+    string ItemName = 2;
 }
 
 message EmptyRequest {}
