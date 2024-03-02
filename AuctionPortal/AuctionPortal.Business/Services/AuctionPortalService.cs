@@ -26,6 +26,21 @@ namespace AuctionPortal.Business.Services
 		{
 			if (auctions.TryGetValue(request.AuctionId, out AuctionModel auction))
 			{
+				if (auction.StartingAmount > request.Amount || (auction.HighestBid is not null && auction.HighestBid.Amount > request.Amount))
+				{
+					return Task.FromResult(new BidResponse
+					{
+						IsSuccess = false,
+						Message = $"Higher amount must be sent for auction {auction.Id}: {auction.ItemName}"
+					});
+				}
+
+				auction.HighestBid = new BidModel
+				{
+					Amount = request.Amount,
+					ClientId = request.ClientId
+				};
+
 				return Task.FromResult(new BidResponse { IsSuccess = true, Message = $"Bid successfully sent for auction {auction.Id}: {auction.ItemName}" });
 			}
 			else
@@ -38,8 +53,16 @@ namespace AuctionPortal.Business.Services
 		{
 			if (auctions.TryGetValue(request.AuctionId, out AuctionModel auction))
 			{
+				var winnerText = auction.HighestBid is null ? "No one bid." : $"Highest bid: {auction.HighestBid.Amount} - {auction.HighestBid.ClientId}";
+
 				auctions.Remove(request.AuctionId);
-				return Task.FromResult(new CloseAuctionResponse { AuctionId = auction.Id, ItemName = auction.ItemName, IsSuccess = true, Message = $"Auction {auction.Id} closed: {auction.ItemName}" });
+				return Task.FromResult(new CloseAuctionResponse
+				{
+					AuctionId = auction.Id,
+					ItemName = auction.ItemName,
+					IsSuccess = true,
+					Message = $"Auction {auction.Id} closed: {auction.ItemName}. Winner: {winnerText}"
+				});
 			}
 			else
 			{

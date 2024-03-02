@@ -44,7 +44,7 @@
 				client.PublishClosedAuction(new AuctionEvent
 				{
 					AuctionId = auctionResponse.AuctionId,
-					ItemName = auctionResponse.ItemName
+					ItemName = auctionResponse.ItemName,
 				});
 
 			return auctionResponse;
@@ -87,16 +87,6 @@
 					onEventReceived(@event);
 				}
 			}
-		}
-
-		//public async Task PublishEvent(Event @event)
-		//{
-		//	client.Publish(@event);
-		//}
-
-		public void Stop()
-		{
-			cancellationTokenSource.Cancel();
 		}
 	}
 }

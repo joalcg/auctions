@@ -27,6 +27,7 @@ message InitiateAuctionResponse {
 message BidRequest {
     string AuctionId = 1;
     double Amount = 2;
+    string ClientId = 3;
 }
 
 message BidResponse {
