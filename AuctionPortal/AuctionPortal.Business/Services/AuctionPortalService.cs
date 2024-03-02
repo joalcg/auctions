@@ -1,10 +1,5 @@
 ﻿using AuctionPortal.Business.Models;
 using Grpc.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AuctionPortal.Business.Services
 {
@@ -53,7 +48,7 @@ namespace AuctionPortal.Business.Services
 		{
 			if (auctions.TryGetValue(request.AuctionId, out AuctionModel auction))
 			{
-				var winnerText = auction.HighestBid is null ? "No one bid." : $"Highest bid: {auction.HighestBid.Amount} - {auction.HighestBid.ClientId}";
+				var winnerText = auction.HighestBid is null ? "N/A" : $"Highest bid: {auction.HighestBid.Amount} - {auction.HighestBid.ClientId}";
 
 				auctions.Remove(request.AuctionId);
 				return Task.FromResult(new CloseAuctionResponse
