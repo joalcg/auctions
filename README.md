@@ -14,11 +14,11 @@ Application can be built by running a simple build in Visual Studio or the conso
 
 ## Dependencies
 
-Google.Protobuf
-Grpc.AspNetCore
-Grpc.Core
-Grpc.Tools
-Microsoft.Extensions.Hosting
+1. Google.Protobuf
+2. Grpc.AspNetCore
+3. Grpc.Core
+4. Grpc.Tools
+5. Microsoft.Extensions.Hosting
 
 ## Details of operation
 
