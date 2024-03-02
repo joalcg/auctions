@@ -5,43 +5,63 @@ namespace AuctionPortal.Client
 {
 	class Program
 	{
-		const int Port = 50051;
-
+		private readonly static string ClientId = Guid.NewGuid().ToString();
 		static async Task Main(string[] args)
 		{
-			//Channel channel = new Channel("127.0.0.1:" + Port, ChannelCredentials.Insecure);
-			//var client = new Auctions.AuctionsClient(channel);
+			var channel = new Channel("localhost:50051", ChannelCredentials.Insecure);
+			var client = new AuctionPortalClient(new AuctionPortalService.AuctionPortalServiceClient(channel));
 
-			//// Example usage
-			//var initiateResponse = client.InitiateAuction(new InitiateAuctionRequest { ItemName = "Item 1", StartingPrice = 100 });
-			//Console.WriteLine("Auction ID: " + initiateResponse.AuctionId);
+			client.SubscribeToInitiatedAuctions(HandleInitiatedAuctionEvent);
+			client.SubscribeToBids(HandleBidEvent);
+			client.SubscribeToClosedAuctions(HandleClosedAuctionEvent);
 
-			//var bidResponse = client.BidOnAuction(new InitiateBidRequest { AuctionId = initiateResponse.AuctionId, Amount = 150 });
-			//Console.WriteLine("Bid response: " + bidResponse.Message);
-
-			//var closeResponse = client.CloseAuction(new CloseAuctionRequest { AuctionId = initiateResponse.AuctionId });
-			//Console.WriteLine("Close response: " + closeResponse.Message);
-
-			//channel.ShutdownAsync().Wait();
-			//Console.WriteLine("Press any key to exit...");
-			//Console.ReadKey();
-
-			using (var client = new AuctionClient("localhost", 50051))
+			while (true)
 			{
-				await client.InitiateAuction("Item1", 100);
-				await client.BidOnAuction("Item1", 120);
-				await client.CloseAuction("Item1");
+				Console.WriteLine(@"
+Please type the option that you want to do:
+1) Initiate auction
+2) Bid auction
+3) Close auction
+4) Exit");
+
+				var optionSelected = Console.ReadLine();
+
+				switch (optionSelected)
+				{
+					case "1":
+						await client.InitiateAuctionAsync(new InitiateAuctionRequest { ItemName = "test1", StartingPrice = 111 });
+						Console.WriteLine("Auction created!");
+						break;
+					case "2":
+						await client.BidAuctionAsync(new BidRequest { AuctionId = "adasd" });
+						Console.WriteLine("Bid sent!");
+						break;
+					case "3":
+						await client.CloseAuctionAsync(new CloseAuctionRequest { AuctionId = "asddsaasdda" });
+						Console.WriteLine("Auction closed!");
+						break;
+					case "4":
+						return;
+					default:
+						Console.Clear();
+						break;
+				}
 			}
+		}
 
-			using (var client = new AuctionClient("localhost", 50052))
-			{
-				await client.InitiateAuction("Item1", 100);
-				await client.BidOnAuction("Item1", 120);
-				await client.CloseAuction("Item1");
-			}
+		public static async void HandleInitiatedAuctionEvent(AuctionEvent @event)
+		{
+			Console.WriteLine($"Client {ClientId} received new auction: " + @event.AuctionId);
+		}
 
+		public static async void HandleBidEvent(BidEvent @event)
+		{
+			Console.WriteLine($"Client {ClientId} received new bid: " + @event.AuctionId);
+		}
 
-			Console.ReadLine();
+		public static async void HandleClosedAuctionEvent(AuctionEvent @event)
+		{
+			Console.WriteLine($"Client {ClientId} received closed auction: " + @event.AuctionId);
 		}
 	}
 }
