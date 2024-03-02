@@ -17,6 +17,7 @@ service AuctionPortalService {
 message InitiateAuctionRequest {
     string ItemName = 1;
     double StartingAmount = 2;
+    string CreatedByClientId = 3;
 }
 
 message InitiateAuctionResponse {
@@ -37,6 +38,7 @@ message BidResponse {
 
 message CloseAuctionRequest {
     string AuctionId = 1;
+    string ClosedByClientId = 3;
 }
 
 message CloseAuctionResponse {

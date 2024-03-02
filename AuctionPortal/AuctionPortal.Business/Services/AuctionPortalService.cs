@@ -13,7 +13,13 @@ namespace AuctionPortal.Business.Services
         public override Task<InitiateAuctionResponse> InitiateAuction(InitiateAuctionRequest request, ServerCallContext context)
         {
             string auctionId = Guid.NewGuid().ToString();
-            auctions.Add(auctionId, new AuctionModel { Id = auctionId, ItemName = request.ItemName, StartingAmount = request.StartingAmount });
+            auctions.Add(auctionId, new AuctionModel 
+            { 
+                Id = auctionId, 
+                ItemName = request.ItemName, 
+                StartingAmount = request.StartingAmount,
+                CreatedByClientId = request.CreatedByClientId
+            });
             return Task.FromResult(new InitiateAuctionResponse { AuctionId = auctionId });
         }
 
@@ -48,7 +54,10 @@ namespace AuctionPortal.Business.Services
         {
             if (auctions.TryGetValue(request.AuctionId, out AuctionModel auction))
             {
-                var winnerText = auction.HighestBid is null ? "N/A" : $"Highest bid: {auction.HighestBid.Amount} - {auction.HighestBid.ClientId}";
+                if (auction.CreatedByClientId != request.ClosedByClientId)
+					return Task.FromResult(new CloseAuctionResponse { IsSuccess = false, Message = "Client does not have permissions to close auction" });
+
+				var winnerText = auction.HighestBid is null ? "N/A" : $"Highest bid: {auction.HighestBid.Amount} - {auction.HighestBid.ClientId}";
 
                 auctions.Remove(request.AuctionId);
                 return Task.FromResult(new CloseAuctionResponse

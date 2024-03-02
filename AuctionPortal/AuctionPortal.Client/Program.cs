@@ -76,7 +76,12 @@ Please type the option that you want to do:
                 isValid = true;
             }
 
-            var newAuction = await client.InitiateAuctionAsync(new InitiateAuctionRequest { ItemName = itemName, StartingAmount = itemAmount });
+            var newAuction = await client.InitiateAuctionAsync(new InitiateAuctionRequest 
+            { 
+                ItemName = itemName, 
+                StartingAmount = itemAmount,
+                CreatedByClientId = ClientId
+            });
             Console.WriteLine($"Auction {newAuction.AuctionId} created!");
         }
 
@@ -134,7 +139,11 @@ Please type the option that you want to do:
                 isValid = true;
             }
 
-            var auctionResponse = await client.CloseAuctionAsync(new CloseAuctionRequest { AuctionId = auctionIdToClose });
+            var auctionResponse = await client.CloseAuctionAsync(new CloseAuctionRequest 
+            { 
+                AuctionId = auctionIdToClose,
+                ClosedByClientId = ClientId
+            });
             Console.WriteLine(auctionResponse.Message);
         }
 
